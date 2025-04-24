@@ -9,12 +9,20 @@ const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? 'https://your-vercel-domain.vercel.app' 
-    : 'http://localhost:3000',
+  origin: '*', // Allow all origins in development
   credentials: true
 }));
 app.use(express.json());
+
+// Add error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Global error handler:', err);
+  res.status(500).json({
+    error: 'Internal server error',
+    message: err.message,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
+});
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -203,16 +211,6 @@ if (process.env.NODE_ENV === 'production') {
     res.sendFile(path.join(__dirname, 'dist', 'index.html'));
   });
 }
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ 
-    error: 'Something broke!',
-    details: err.message,
-    code: err.code
-  });
-});
 
 // Start the server with error handling
 const startServer = async () => {

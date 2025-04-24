@@ -18,7 +18,7 @@ apiClient.interceptors.response.use(
     if (error.response) {
       // The request was made and the server responded with a status code
       // that falls out of the range of 2xx
-      const errorMessage = error.response.data?.error || 'An error occurred';
+      const errorMessage = error.response.data?.message || error.response.data?.error || 'An error occurred';
       const errorDetails = error.response.data?.details || '';
       const errorCode = error.response.data?.code || '';
       
@@ -26,7 +26,8 @@ apiClient.interceptors.response.use(
         status: error.response.status,
         message: errorMessage,
         details: errorDetails,
-        code: errorCode
+        code: errorCode,
+        data: error.response.data
       });
 
       // Create a more detailed error object
@@ -35,6 +36,7 @@ apiClient.interceptors.response.use(
       (enhancedError as any).status = error.response.status;
       (enhancedError as any).details = errorDetails;
       (enhancedError as any).code = errorCode;
+      (enhancedError as any).data = error.response.data;
       
       throw enhancedError;
     } else if (error.request) {
