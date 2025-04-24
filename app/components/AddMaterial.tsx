@@ -16,9 +16,11 @@ import {
   DialogContent,
   DialogActions,
   Alert,
+  CircularProgress,
 } from '@mui/material';
 import { Add as AddIcon, Close as CloseIcon } from '@mui/icons-material';
 import { StudyMaterial } from '../../types/StudyMaterial';
+import { studyMaterialApi } from '../../lib/api';
 
 interface AddMaterialProps {
   onAdd: (material: StudyMaterial) => void;
@@ -37,30 +39,42 @@ const AddMaterial: React.FC<AddMaterialProps> = ({ onAdd, onClose, open }) => {
   const [tags, setTags] = useState<string[]>([]);
   const [currentTag, setCurrentTag] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !description || !subject || !semester || !link || !author) {
       setError('Please fill in all required fields');
       return;
     }
 
-    const newMaterial: StudyMaterial = {
-      id: Date.now().toString(),
-      title,
-      description,
-      subject,
-      semester: parseInt(semester),
-      type,
-      link,
-      tags,
-      uploadDate: new Date().toISOString(),
-      author,
-    };
+    try {
+      setLoading(true);
+      const newMaterial = await studyMaterialApi.create({
+        title,
+        description,
+        subject,
+        semester: parseInt(semester),
+        type,
+        link,
+        tags,
+        author,
+      });
 
-    onAdd(newMaterial);
-    handleReset();
-    onClose();
+      onAdd({
+        ...newMaterial,
+        id: newMaterial.id,
+        uploadDate: newMaterial.createdAt.toISOString(),
+      });
+      
+      handleReset();
+      onClose();
+    } catch (err) {
+      setError('Failed to add study material. Please try again.');
+      console.error('Error adding material:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleReset = () => {
@@ -123,22 +137,15 @@ const AddMaterial: React.FC<AddMaterialProps> = ({ onAdd, onClose, open }) => {
             onChange={(e) => setDescription(e.target.value)}
           />
           <FormControl fullWidth margin="normal">
-            <InputLabel>Department</InputLabel>
-            <Select value={subject} label="Department" onChange={(e) => setSubject(e.target.value)}>
-              <MenuItem value="CSE-BC">CSE (IoT, Cyber Security including Blockchain Technology)</MenuItem>
-              <MenuItem value="R&A">Robotics and Automation</MenuItem>
-              <MenuItem value="AIML">Artificial Intelligence & Machine Learning</MenuItem>
-              <MenuItem value="CIVIL">Civil Engineering</MenuItem>
-              <MenuItem value="CSE">Computer Science and Engineering</MenuItem>
-              <MenuItem value="CSD">Computer Science and Design</MenuItem>
-              <MenuItem value="ECE">Electronics and Communication Engineering</MenuItem>
-              <MenuItem value="EEE">Electrical and Electronics Engineering</MenuItem>
-              <MenuItem value="ISE">Information Science and Engineering</MenuItem>
-              <MenuItem value="MECH">Mechanical Engineering</MenuItem>
-              <MenuItem value="MCA">Master of Computer Applications</MenuItem>
-              <MenuItem value="MBA">Master of Business Administration</MenuItem>
-              <MenuItem value="BCA">Bachelor of Computer Applications (BCA)</MenuItem>
-              <MenuItem value="BBA">Bachelor of Business Administration (BBA)</MenuItem>
+            <InputLabel>Subject</InputLabel>
+            <Select value={subject} label="Subject" onChange={(e) => setSubject(e.target.value)}>
+              <MenuItem value="CSE">Computer Science Engineering</MenuItem>
+              <MenuItem value="ECE">Electronics & Communication Engineering</MenuItem>
+              <MenuItem value="EEE">Electrical & Electronics Engineering</MenuItem>
+              <MenuItem value="ME">Mechanical Engineering</MenuItem>
+              <MenuItem value="CE">Civil Engineering</MenuItem>
+              <MenuItem value="BCA">Bachelor of Computer Applications</MenuItem>
+              <MenuItem value="BBA">Bachelor of Business Administration</MenuItem>
               <MenuItem value="BSH">Basic Sciences and Humanities</MenuItem>
               <MenuItem value="BSC">B.Sc. Honors</MenuItem>
             </Select>
@@ -211,9 +218,14 @@ const AddMaterial: React.FC<AddMaterialProps> = ({ onAdd, onClose, open }) => {
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={handleReset}>Reset</Button>
-        <Button onClick={handleSubmit} variant="contained">
-          Add Material
+        <Button onClick={onClose}>Cancel</Button>
+        <Button
+          type="submit"
+          variant="contained"
+          onClick={handleSubmit}
+          disabled={loading}
+        >
+          {loading ? <CircularProgress size={24} /> : 'Add Material'}
         </Button>
       </DialogActions>
     </Dialog>
