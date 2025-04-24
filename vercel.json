@@ -9,18 +9,14 @@
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
-        "buildCommand": "npm run vercel-build",
-        "outputDirectory": "dist"
+        "distDir": "dist"
       }
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/server.js"
-    },
-    {
-      "handle": "filesystem"
+      "dest": "server.js"
     },
     {
       "src": "/(.*)",
@@ -28,6 +24,6 @@
     }
   ],
   "env": {
-    "DATABASE_URL": "${DATABASE_URL}"
+    "NODE_ENV": "production"
   }
 } 
