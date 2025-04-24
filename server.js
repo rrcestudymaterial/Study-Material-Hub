@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const prisma = require('./lib/prisma');
+const prisma = require('./lib/db');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -135,11 +135,11 @@ app.get('/api/materials', async (req, res) => {
       id: material.id,
       title: material.title,
       description: material.description || '',
-      subject: material.categoryId,
+      subject: categoryMap[material.categoryId],
       semester: material.semester,
       type: material.type,
       link: material.fileUrl,
-      tags: material.tags,
+      tags: material.tags || [],
       uploadDate: material.createdAt.toISOString(),
       author: material.author
     }));
@@ -149,7 +149,7 @@ app.get('/api/materials', async (req, res) => {
     console.error('Error fetching materials:', error);
     res.status(500).json({
       error: 'Failed to fetch materials',
-      message: error.message,
+      message: error.message || 'Unknown error occurred',
       details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
@@ -230,6 +230,7 @@ app.post('/api/materials', async (req, res) => {
       }
     });
 
+    // Map the response to match the frontend model
     const mappedMaterial = {
       id: newMaterial.id,
       title: newMaterial.title,
@@ -238,7 +239,7 @@ app.post('/api/materials', async (req, res) => {
       semester: newMaterial.semester,
       type: newMaterial.type,
       link: newMaterial.fileUrl,
-      tags: newMaterial.tags,
+      tags: newMaterial.tags || [],
       uploadDate: newMaterial.createdAt.toISOString(),
       author: newMaterial.author
     };
@@ -248,7 +249,7 @@ app.post('/api/materials', async (req, res) => {
     console.error('Error creating material:', error);
     res.status(500).json({ 
       error: 'Failed to create material',
-      message: error.message,
+      message: error.message || 'Unknown error occurred',
       details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }

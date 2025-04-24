@@ -20,6 +20,23 @@ class ApiError extends Error {
   }
 }
 
+const handleApiResponse = async (response: Response) => {
+  const data = await response.json();
+  
+  if (!response.ok) {
+    throw new ApiError(
+      data.error || 'API request failed',
+      response.status,
+      {
+        message: data.message,
+        details: data.details
+      }
+    );
+  }
+  
+  return data;
+};
+
 export const studyMaterialApi = {
   // Check API health
   async checkHealth() {
@@ -29,17 +46,7 @@ export const studyMaterialApi = {
         credentials: 'include',
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new ApiError(
-          data.error || 'Health check failed',
-          response.status,
-          data
-        );
-      }
-
-      return data;
+      return handleApiResponse(response);
     } catch (error) {
       console.error('Error in health check:', error);
       throw error;
@@ -73,24 +80,19 @@ export const studyMaterialApi = {
 
   // Create a new study material
   async create(material: Omit<StudyMaterial, 'id' | 'uploadDate'>) {
-    const response = await fetch(`${API_URL}/materials`, {
-      method: 'POST',
-      headers: defaultHeaders,
-      credentials: 'include',
-      body: JSON.stringify(material),
-    });
+    try {
+      const response = await fetch(`${API_URL}/materials`, {
+        method: 'POST',
+        headers: defaultHeaders,
+        credentials: 'include',
+        body: JSON.stringify(material),
+      });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new ApiError(
-        data.error || 'Failed to create material',
-        response.status,
-        data.details
-      );
+      return handleApiResponse(response);
+    } catch (error) {
+      console.error('Error creating material:', error);
+      throw error;
     }
-
-    return data;
   },
 
   // Get all study materials
@@ -101,23 +103,9 @@ export const studyMaterialApi = {
         credentials: 'include',
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        console.error('API Error Response:', data);
-        throw new ApiError(
-          data.error || 'Failed to fetch materials',
-          response.status,
-          {
-            message: data.message,
-            details: data.details
-          }
-        );
-      }
-
-      return data;
+      return handleApiResponse(response);
     } catch (error) {
-      console.error('Error in getAll:', error);
+      console.error('Error fetching materials:', error);
       throw error;
     }
   },
@@ -166,24 +154,29 @@ export const studyMaterialApi = {
 
   // Delete a study material
   async delete(id: string) {
-    const response = await fetch(`${API_URL}/materials/${id}`, {
-      method: 'DELETE',
-      headers: defaultHeaders,
-      credentials: 'include',
-    });
+    try {
+      const response = await fetch(`${API_URL}/materials/${id}`, {
+        method: 'DELETE',
+        headers: defaultHeaders,
+        credentials: 'include',
+      });
 
-    if (!response.ok) {
-      const data = await response.json();
-      throw new ApiError(
-        data.error || 'Failed to delete material',
-        response.status,
-        data.details
-      );
-    }
+      if (!response.ok) {
+        const data = await response.json();
+        throw new ApiError(
+          data.error || 'Failed to delete material',
+          response.status,
+          data.details
+        );
+      }
 
-    // Don't try to parse response as JSON for 204 No Content
-    if (response.status !== 204) {
-      return response.json();
+      // Don't try to parse response as JSON for 204 No Content
+      if (response.status !== 204) {
+        return response.json();
+      }
+    } catch (error) {
+      console.error('Error deleting material:', error);
+      throw error;
     }
   },
 };
