@@ -19,19 +19,7 @@
       ]
     }
   ],
-  "build": {
-    "env": {
-      "DATABASE_URL": "${DATABASE_URL}"
-    }
-  },
   "env": {
     "DATABASE_URL": "${DATABASE_URL}"
-  },
-  "installCommand": "npm install",
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/node"
-    }
-  ]
+  }
 } 

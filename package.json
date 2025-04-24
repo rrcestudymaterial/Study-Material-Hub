@@ -31,7 +31,6 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
-    "postinstall": "prisma generate",
-    "vercel-build": "prisma generate && prisma migrate deploy && tsc && vite build"
+    "vercel-build": "npx prisma generate && npx prisma migrate deploy && tsc && vite build"
   }
 }
