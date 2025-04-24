@@ -21,6 +21,56 @@ class ApiError extends Error {
 }
 
 export const studyMaterialApi = {
+  // Check API health
+  async checkHealth() {
+    try {
+      const response = await fetch(`${API_URL}/health`, {
+        headers: defaultHeaders,
+        credentials: 'include',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new ApiError(
+          data.error || 'Health check failed',
+          response.status,
+          data
+        );
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error in health check:', error);
+      throw error;
+    }
+  },
+
+  // Check database health
+  async checkDbHealth() {
+    try {
+      const response = await fetch(`${API_URL}/health/db`, {
+        headers: defaultHeaders,
+        credentials: 'include',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new ApiError(
+          data.error || 'Database health check failed',
+          response.status,
+          data
+        );
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error in database health check:', error);
+      throw error;
+    }
+  },
+
   // Create a new study material
   async create(material: Omit<StudyMaterial, 'id' | 'uploadDate'>) {
     const response = await fetch(`${API_URL}/materials`, {
@@ -45,26 +95,31 @@ export const studyMaterialApi = {
 
   // Get all study materials
   async getAll() {
-    const response = await fetch(`${API_URL}/materials`, {
-      headers: defaultHeaders,
-      credentials: 'include',
-    });
+    try {
+      const response = await fetch(`${API_URL}/materials`, {
+        headers: defaultHeaders,
+        credentials: 'include',
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (!response.ok) {
-      console.error('API Error Response:', data);
-      throw new ApiError(
-        data.error || 'Failed to fetch materials',
-        response.status,
-        {
-          message: data.message,
-          details: data.details
-        }
-      );
+      if (!response.ok) {
+        console.error('API Error Response:', data);
+        throw new ApiError(
+          data.error || 'Failed to fetch materials',
+          response.status,
+          {
+            message: data.message,
+            details: data.details
+          }
+        );
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error in getAll:', error);
+      throw error;
     }
-
-    return data;
   },
 
   // Get study materials by filters

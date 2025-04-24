@@ -3,9 +3,9 @@ const { PrismaClient } = require('@prisma/client');
 const cors = require('cors');
 const path = require('path');
 
-// Initialize Prisma with connection management
+// Initialize Prisma with minimal logging to reduce overhead
 const prisma = new PrismaClient({
-  log: ['query', 'info', 'warn', 'error'],
+  log: ['error'],
 });
 
 const app = express();
@@ -37,8 +37,16 @@ app.use((err, req, res, next) => {
   });
 });
 
+// Simple health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'ok',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Health check endpoint with database status
-app.get('/api/health', async (req, res) => {
+app.get('/api/health/db', async (req, res) => {
   try {
     // Test database connection
     await prisma.$queryRaw`SELECT 1`;
@@ -61,18 +69,27 @@ app.get('/api/materials', async (req, res) => {
   try {
     const { searchQuery, subject, semester, type } = req.query;
     
-    // Build the where clause based on filters using Object.assign
-    const where = Object.assign({}, 
-      searchQuery && {
-        OR: [
-          { title: { contains: searchQuery, mode: 'insensitive' } },
-          { description: { contains: searchQuery, mode: 'insensitive' } },
-        ]
-      },
-      subject && { categoryId: subject },
-      semester && { semester: parseInt(semester) },
-      type && type !== 'ALL' && { type }
-    );
+    // Build the where clause based on filters
+    let whereClause = {};
+    
+    if (searchQuery) {
+      whereClause.OR = [
+        { title: { contains: searchQuery, mode: 'insensitive' } },
+        { description: { contains: searchQuery, mode: 'insensitive' } },
+      ];
+    }
+    
+    if (subject) {
+      whereClause.categoryId = subject;
+    }
+    
+    if (semester) {
+      whereClause.semester = parseInt(semester);
+    }
+    
+    if (type && type !== 'ALL') {
+      whereClause.type = type;
+    }
 
     // Test database connection before query
     try {
@@ -85,35 +102,32 @@ app.get('/api/materials', async (req, res) => {
       });
     }
 
-    // Use explicit field selection to prevent circular references
+    // Fetch materials without nested relations
     const materials = await prisma.material.findMany({
-      where,
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        fileUrl: true,
-        type: true,
-        tags: true,
-        author: true,
-        semester: true,
-        createdAt: true,
-        category: {
-          select: {
-            id: true,
-            name: true
-          }
-        },
-        user: {
-          select: {
-            id: true,
-            name: true
-          }
-        }
-      },
+      where: whereClause,
       orderBy: {
         createdAt: 'desc',
       },
+    });
+
+    // Fetch categories separately
+    const categoryIds = [...new Set(materials.map(m => m.categoryId))];
+    const categories = await prisma.category.findMany({
+      where: {
+        id: {
+          in: categoryIds
+        }
+      },
+      select: {
+        id: true,
+        name: true
+      }
+    });
+
+    // Create a map for quick lookup
+    const categoryMap = {};
+    categories.forEach(category => {
+      categoryMap[category.id] = category.name;
     });
 
     // Map the database response to the frontend model
@@ -121,7 +135,7 @@ app.get('/api/materials', async (req, res) => {
       id: material.id,
       title: material.title,
       description: material.description || '',
-      subject: material.category.id,
+      subject: material.categoryId,
       semester: material.semester,
       type: material.type,
       link: material.fileUrl,
@@ -210,29 +224,6 @@ app.post('/api/materials', async (req, res) => {
         semester: semester,
         userId: user.id,
         categoryId: category.id
-      },
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        fileUrl: true,
-        type: true,
-        tags: true,
-        author: true,
-        semester: true,
-        createdAt: true,
-        category: {
-          select: {
-            id: true,
-            name: true
-          }
-        },
-        user: {
-          select: {
-            id: true,
-            name: true
-          }
-        }
       }
     });
 
@@ -240,7 +231,7 @@ app.post('/api/materials', async (req, res) => {
       id: newMaterial.id,
       title: newMaterial.title,
       description: newMaterial.description || '',
-      subject: newMaterial.category.id,
+      subject: newMaterial.categoryId,
       semester: newMaterial.semester,
       type: newMaterial.type,
       link: newMaterial.fileUrl,
