@@ -6,12 +6,17 @@ import path from 'path';
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 5173,
+    port: 3000,
+    strictPort: false, // Allow fallback to another port if 3000 is in use
     proxy: {
       '/api': {
         target: 'http://localhost:3001',
         changeOrigin: true,
+        secure: false,
       },
+    },
+    watch: {
+      usePolling: true,
     },
   },
   build: {

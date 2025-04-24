@@ -43,8 +43,18 @@ const AddMaterial: React.FC<AddMaterialProps> = ({ onAdd, onClose, open }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !description || !subject || !semester || !link || !author) {
+    setError('');
+
+    // Validate required fields
+    if (!title || !subject || !semester || !link || !author) {
       setError('Please fill in all required fields');
+      return;
+    }
+
+    // Validate semester
+    const semesterNum = parseInt(semester);
+    if (isNaN(semesterNum) || semesterNum < 1 || semesterNum > 8) {
+      setError('Semester must be a number between 1 and 8');
       return;
     }
 
@@ -54,30 +64,34 @@ const AddMaterial: React.FC<AddMaterialProps> = ({ onAdd, onClose, open }) => {
         title,
         description,
         subject,
-        semester: parseInt(semester),
+        semester: semesterNum,
         type,
         link,
         tags,
         author,
       });
 
-      onAdd({
+      // Create a new material object with the current date if createdAt is not available
+      const material: StudyMaterial = {
         id: newMaterial.id,
         title: newMaterial.title,
         description: newMaterial.description || '',
-        subject: newMaterial.categoryId,
+        subject: newMaterial.subject || newMaterial.categoryId,
         semester: newMaterial.semester,
         type: newMaterial.type as 'PDF' | 'VIDEO',
-        link: newMaterial.fileUrl,
-        tags: newMaterial.tags,
-        uploadDate: newMaterial.createdAt.toISOString(),
+        link: newMaterial.link || newMaterial.fileUrl,
+        tags: newMaterial.tags || [],
+        uploadDate: newMaterial.uploadDate || new Date().toISOString(),
         author: newMaterial.author
-      });
-      
+      };
+
+      onAdd(material);
       handleReset();
       onClose();
-    } catch (err) {
-      setError('Failed to add study material. Please try again.');
+    } catch (err: any) {
+      // Handle API error messages
+      const errorMessage = err.details || err.message || 'Failed to add study material. Please try again.';
+      setError(errorMessage);
       console.error('Error adding material:', err);
     } finally {
       setLoading(false);
@@ -98,8 +112,8 @@ const AddMaterial: React.FC<AddMaterialProps> = ({ onAdd, onClose, open }) => {
   };
 
   const handleAddTag = () => {
-    if (currentTag && !tags.includes(currentTag)) {
-      setTags([...tags, currentTag]);
+    if (currentTag.trim() && !tags.includes(currentTag.trim())) {
+      setTags([...tags, currentTag.trim()]);
       setCurrentTag('');
     }
   };

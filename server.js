@@ -74,18 +74,73 @@ app.get('/api/materials', async (req, res) => {
 app.post('/api/materials', async (req, res) => {
   try {
     const material = req.body;
+    
+    // Validate required fields
+    if (!material.title || !material.link || !material.type || !material.author || !material.semester || !material.subject) {
+      return res.status(400).json({ 
+        error: 'Missing required fields',
+        required: ['title', 'link', 'type', 'author', 'semester', 'subject']
+      });
+    }
+
+    // Validate type
+    if (!['PDF', 'VIDEO'].includes(material.type)) {
+      return res.status(400).json({ 
+        error: 'Invalid type',
+        allowed: ['PDF', 'VIDEO']
+      });
+    }
+
+    // Validate semester
+    const semester = parseInt(material.semester);
+    if (isNaN(semester) || semester < 1 || semester > 8) {
+      return res.status(400).json({ 
+        error: 'Invalid semester',
+        allowed: '1-8'
+      });
+    }
+
+    // Get or create default user
+    let user = await prisma.user.findFirst({
+      where: { email: 'default@example.com' }
+    });
+
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          email: 'default@example.com',
+          name: 'Default User'
+        }
+      });
+    }
+
+    // Get or create category
+    let category = await prisma.category.findFirst({
+      where: { name: material.subject }
+    });
+
+    if (!category) {
+      category = await prisma.category.create({
+        data: {
+          name: material.subject,
+          description: `Category for ${material.subject}`
+        }
+      });
+    }
+
+    // Create the material
     const newMaterial = await prisma.material.create({
-      data: Object.assign({}, {
+      data: {
         title: material.title,
-        description: material.description,
+        description: material.description || '',
         fileUrl: material.link,
-        userId: 'default-user',
-        categoryId: material.subject,
         type: material.type,
-        tags: material.tags,
+        tags: material.tags || [],
         author: material.author,
-        semester: material.semester,
-      })
+        semester: semester,
+        userId: user.id,
+        categoryId: category.id
+      }
     });
 
     const mappedMaterial = {
@@ -104,7 +159,10 @@ app.post('/api/materials', async (req, res) => {
     res.status(201).json(mappedMaterial);
   } catch (error) {
     console.error('Error creating material:', error);
-    res.status(500).json({ error: 'Failed to create material' });
+    res.status(500).json({ 
+      error: 'Failed to create material',
+      details: error.message
+    });
   }
 });
 

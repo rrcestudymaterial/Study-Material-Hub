@@ -30,9 +30,10 @@
     "prisma": "^5.10.0"
   },
   "scripts": {
+    "clean": "if exist dist rmdir /s /q dist && if exist node_modules\\.vite rmdir /s /q node_modules\\.vite",
     "dev:frontend": "vite",
     "dev:backend": "node server.js",
-    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "dev": "npm run clean && concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "prisma:generate": "prisma generate",

@@ -4,30 +4,59 @@ import { StudyMaterial } from '../types/StudyMaterial';
 // In production, /api requests will be handled by the Express server directly
 const API_URL = '/api';
 
+const defaultHeaders = {
+  'Content-Type': 'application/json',
+  'Accept': 'application/json',
+};
+
+class ApiError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+    public details?: any
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
 export const studyMaterialApi = {
   // Create a new study material
   async create(material: Omit<StudyMaterial, 'id' | 'uploadDate'>) {
     const response = await fetch(`${API_URL}/materials`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: defaultHeaders,
+      credentials: 'include',
       body: JSON.stringify(material),
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
-      throw new Error('Failed to create material');
+      throw new ApiError(
+        data.error || 'Failed to create material',
+        response.status,
+        data.details
+      );
     }
 
-    return response.json();
+    return data;
   },
 
   // Get all study materials
   async getAll() {
-    const response = await fetch(`${API_URL}/materials`);
+    const response = await fetch(`${API_URL}/materials`, {
+      headers: defaultHeaders,
+      credentials: 'include',
+    });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch materials');
+      const data = await response.json();
+      throw new ApiError(
+        data.error || 'Failed to fetch materials',
+        response.status,
+        data.details
+      );
     }
 
     return response.json();
@@ -58,10 +87,18 @@ export const studyMaterialApi = {
       queryParams.append('type', filters.type);
     }
 
-    const response = await fetch(`${API_URL}/materials?${queryParams.toString()}`);
+    const response = await fetch(`${API_URL}/materials?${queryParams.toString()}`, {
+      headers: defaultHeaders,
+      credentials: 'include',
+    });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch materials');
+      const data = await response.json();
+      throw new ApiError(
+        data.error || 'Failed to fetch materials',
+        response.status,
+        data.details
+      );
     }
 
     return response.json();
@@ -71,10 +108,17 @@ export const studyMaterialApi = {
   async delete(id: string) {
     const response = await fetch(`${API_URL}/materials/${id}`, {
       method: 'DELETE',
+      headers: defaultHeaders,
+      credentials: 'include',
     });
 
     if (!response.ok) {
-      throw new Error('Failed to delete material');
+      const data = await response.json();
+      throw new ApiError(
+        data.error || 'Failed to delete material',
+        response.status,
+        data.details
+      );
     }
 
     return response.json();
