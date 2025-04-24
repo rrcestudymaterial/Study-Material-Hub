@@ -67,18 +67,13 @@ const App: React.FC = () => {
         setMaterials(fetchedMaterials);
       } catch (error) {
         console.error('Error fetching materials:', error);
-        // Fallback to localStorage if API fails
-        const savedMaterials = localStorage.getItem('materials');
-        if (savedMaterials) {
-          setMaterials(JSON.parse(savedMaterials));
-        }
       }
     };
 
     fetchMaterials();
 
     const handleScroll = () => {
-      const scrollThreshold = 200; // Reduced threshold to show button earlier
+      const scrollThreshold = 200;
       setShowBackToTop(window.scrollY > scrollThreshold);
     };
 

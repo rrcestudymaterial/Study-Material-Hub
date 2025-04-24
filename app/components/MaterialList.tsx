@@ -35,6 +35,7 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
 } from '@mui/icons-material';
+import { studyMaterialApi } from '../../services/studyMaterialApi';
 
 // Sample data with enhanced information
 const sampleMaterials: StudyMaterial[] = [
@@ -225,15 +226,21 @@ const MaterialList: React.FC<MaterialListProps> = ({ filters, materials, setMate
     setEditDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this material?')) {
-      setMaterials(prev => prev.filter(material => material.id !== id));
-      // Remove from favorites and downloads if present
-      setFavorites(prev => prev.filter(fid => fid !== id));
-      setDownloads(prev => {
-        const { [id]: _, ...rest } = prev;
-        return rest;
-      });
+      try {
+        await studyMaterialApi.delete(id);
+        setMaterials(prev => prev.filter(material => material.id !== id));
+        // Remove from favorites and downloads if present
+        setFavorites(prev => prev.filter(fid => fid !== id));
+        setDownloads(prev => {
+          const { [id]: _, ...rest } = prev;
+          return rest;
+        });
+      } catch (error) {
+        console.error('Error deleting material:', error);
+        alert('Failed to delete material. Please try again.');
+      }
     }
   };
 
