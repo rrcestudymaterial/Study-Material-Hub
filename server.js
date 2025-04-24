@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 3001;
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? 'https://your-vercel-domain.vercel.app' 
-    : 'http://localhost:5173',
+    : 'http://localhost:3000',
   credentials: true
 }));
 app.use(express.json());
@@ -67,7 +67,11 @@ app.get('/api/materials', async (req, res) => {
     res.json(mappedMaterials);
   } catch (error) {
     console.error('Error fetching materials:', error);
-    res.status(500).json({ error: 'Failed to fetch materials' });
+    res.status(500).json({ 
+      error: 'Failed to fetch materials',
+      details: error.message,
+      code: error.code
+    });
   }
 });
 
@@ -161,7 +165,8 @@ app.post('/api/materials', async (req, res) => {
     console.error('Error creating material:', error);
     res.status(500).json({ 
       error: 'Failed to create material',
-      details: error.message
+      details: error.message,
+      code: error.code
     });
   }
 });
@@ -175,7 +180,11 @@ app.delete('/api/materials/:id', async (req, res) => {
     res.status(204).end();
   } catch (error) {
     console.error('Error deleting material:', error);
-    res.status(500).json({ error: 'Failed to delete material' });
+    res.status(500).json({ 
+      error: 'Failed to delete material',
+      details: error.message,
+      code: error.code
+    });
   }
 });
 
@@ -198,7 +207,11 @@ if (process.env.NODE_ENV === 'production') {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ error: 'Something broke!' });
+  res.status(500).json({ 
+    error: 'Something broke!',
+    details: err.message,
+    code: err.code
+  });
 });
 
 // Start the server with error handling
