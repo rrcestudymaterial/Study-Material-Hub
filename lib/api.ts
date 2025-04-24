@@ -1,35 +1,36 @@
-import prisma from './prisma';
 import { StudyMaterial } from '../types/StudyMaterial';
+
+const API_URL = process.env.NODE_ENV === 'production' 
+  ? '/api' 
+  : 'http://localhost:3001/api';
 
 export const studyMaterialApi = {
   // Create a new study material
   async create(material: Omit<StudyMaterial, 'id' | 'uploadDate'>) {
-    return prisma.material.create({
-      data: {
-        title: material.title,
-        description: material.description,
-        fileUrl: material.link,
-        userId: 'default-user', // You can replace this with actual user ID when auth is implemented
-        categoryId: material.subject, // Using subject as category
-        type: material.type,
-        tags: material.tags,
-        author: material.author,
-        semester: material.semester,
+    const response = await fetch(`${API_URL}/materials`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
+      body: JSON.stringify(material),
     });
+
+    if (!response.ok) {
+      throw new Error('Failed to create material');
+    }
+
+    return response.json();
   },
 
   // Get all study materials
   async getAll() {
-    return prisma.material.findMany({
-      include: {
-        category: true,
-        user: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    const response = await fetch(`${API_URL}/materials`);
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch materials');
+    }
+
+    return response.json();
   },
 
   // Get study materials by filters
@@ -39,43 +40,43 @@ export const studyMaterialApi = {
     semester?: string;
     type?: 'ALL' | 'PDF' | 'VIDEO';
   }) {
-    const where: any = {};
-
+    const queryParams = new URLSearchParams();
+    
     if (filters.searchQuery) {
-      where.OR = [
-        { title: { contains: filters.searchQuery, mode: 'insensitive' } },
-        { description: { contains: filters.searchQuery, mode: 'insensitive' } },
-      ];
+      queryParams.append('searchQuery', filters.searchQuery);
     }
-
+    
     if (filters.subject) {
-      where.categoryId = filters.subject;
+      queryParams.append('subject', filters.subject);
     }
-
+    
     if (filters.semester) {
-      where.semester = parseInt(filters.semester);
+      queryParams.append('semester', filters.semester);
     }
-
+    
     if (filters.type && filters.type !== 'ALL') {
-      where.type = filters.type;
+      queryParams.append('type', filters.type);
     }
 
-    return prisma.material.findMany({
-      where,
-      include: {
-        category: true,
-        user: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    const response = await fetch(`${API_URL}/materials?${queryParams.toString()}`);
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch materials');
+    }
+
+    return response.json();
   },
 
   // Delete a study material
   async delete(id: string) {
-    return prisma.material.delete({
-      where: { id },
+    const response = await fetch(`${API_URL}/materials/${id}`, {
+      method: 'DELETE',
     });
+
+    if (!response.ok) {
+      throw new Error('Failed to delete material');
+    }
+
+    return response.json();
   },
 };

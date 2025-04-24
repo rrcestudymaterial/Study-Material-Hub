@@ -60,11 +60,22 @@ const App: React.FC = () => {
       setDarkMode(true);
     }
 
-    // Load materials from localStorage
-    const savedMaterials = localStorage.getItem('materials');
-    if (savedMaterials) {
-      setMaterials(JSON.parse(savedMaterials));
-    }
+    // Fetch materials from API
+    const fetchMaterials = async () => {
+      try {
+        const fetchedMaterials = await studyMaterialApi.getAll();
+        setMaterials(fetchedMaterials);
+      } catch (error) {
+        console.error('Error fetching materials:', error);
+        // Fallback to localStorage if API fails
+        const savedMaterials = localStorage.getItem('materials');
+        if (savedMaterials) {
+          setMaterials(JSON.parse(savedMaterials));
+        }
+      }
+    };
+
+    fetchMaterials();
 
     const handleScroll = () => {
       const scrollThreshold = 200; // Reduced threshold to show button earlier

@@ -12,7 +12,9 @@
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "@vitejs/plugin-react": "^4.0.0",
+    "cors": "^2.8.5",
     "dotenv": "^16.4.0",
+    "express": "^4.21.2",
     "firebase": "^11.6.0",
     "pg": "^8.11.3",
     "react": "^18.2.0",
@@ -22,6 +24,8 @@
     "vite": "^4.3.0"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
     "prisma": "^5.10.0"
   },
   "scripts": {
@@ -31,6 +35,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
-    "vercel-build": "npx prisma generate && npx prisma migrate deploy && tsc && vite build"
+    "vercel-build": "npx prisma generate && npx prisma migrate deploy && tsc && vite build",
+    "start": "node server.js"
   }
 }
