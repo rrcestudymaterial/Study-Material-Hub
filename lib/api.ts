@@ -1,8 +1,8 @@
 import { StudyMaterial } from '../types/StudyMaterial';
 
-const API_URL = process.env.NODE_ENV === 'production' 
-  ? '/api' 
-  : 'http://localhost:3001/api';
+// In development, the Vite dev server will proxy /api requests to http://localhost:3001
+// In production, /api requests will be handled by the Express server directly
+const API_URL = '/api';
 
 export const studyMaterialApi = {
   // Create a new study material
