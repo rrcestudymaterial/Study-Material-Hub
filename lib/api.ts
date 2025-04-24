@@ -181,6 +181,9 @@ export const studyMaterialApi = {
       );
     }
 
-    return response.json();
+    // Don't try to parse response as JSON for 204 No Content
+    if (response.status !== 204) {
+      return response.json();
+    }
   },
 };
