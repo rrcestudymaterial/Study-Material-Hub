@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const prisma = require('./lib/db');
+const prisma = require('./lib/prisma');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
