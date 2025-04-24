@@ -7,6 +7,15 @@ const prisma = new PrismaClient();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Test database connection
+prisma.$connect()
+  .then(() => {
+    console.log('Successfully connected to the database');
+  })
+  .catch((error) => {
+    console.error('Failed to connect to the database:', error);
+  });
+
 // Middleware
 app.use(cors({
   origin: '*', // Allow all origins in development
@@ -24,9 +33,23 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok' });
+// Health check endpoint with database status
+app.get('/api/health', async (req, res) => {
+  try {
+    // Test database connection
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ 
+      status: 'ok',
+      database: 'connected'
+    });
+  } catch (error) {
+    console.error('Health check failed:', error);
+    res.status(500).json({ 
+      status: 'error',
+      database: 'disconnected',
+      error: error.message
+    });
+  }
 });
 
 // API Routes
