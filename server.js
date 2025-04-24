@@ -1,12 +1,7 @@
 const express = require('express');
-const { PrismaClient } = require('@prisma/client');
 const cors = require('cors');
 const path = require('path');
-
-// Initialize Prisma with minimal logging to reduce overhead
-const prisma = new PrismaClient({
-  log: ['error'],
-});
+const prisma = require('./lib/prisma').default;
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -18,6 +13,7 @@ prisma.$connect()
   })
   .catch((error) => {
     console.error('Failed to connect to the database:', error);
+    process.exit(1);
   });
 
 // Middleware
