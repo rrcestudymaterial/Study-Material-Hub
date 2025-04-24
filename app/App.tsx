@@ -109,7 +109,7 @@ const App: React.FC = () => {
         type: savedMaterial.type as 'PDF' | 'VIDEO',
         link: savedMaterial.fileUrl,
         tags: savedMaterial.tags,
-        uploadDate: savedMaterial.createdAt.toISOString(),
+        uploadDate: savedMaterial.createdAt ? savedMaterial.createdAt.toISOString() : new Date().toISOString(),
         author: savedMaterial.author
       };
       const updatedMaterials = [...materials, mappedMaterial];
