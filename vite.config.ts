@@ -16,9 +16,19 @@ export default defineConfig({
         main: path.resolve(__dirname, 'index.html'),
       },
       output: {
-        manualChunks: undefined,
-      },
+        manualChunks: {
+          vendor: [
+            'react',
+            'react-dom',
+            'react-router-dom',
+            '@mui/material',
+            '@emotion/react',
+            '@emotion/styled'
+          ]
+        }
+      }
     },
+    chunkSizeWarningLimit: 1000
   },
   resolve: {
     alias: [

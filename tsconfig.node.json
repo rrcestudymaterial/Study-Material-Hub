@@ -8,13 +8,3 @@
   },
   "include": ["vite.config.ts"]
 } 
-{
-  "compilerOptions": {
-    "composite": true,
-    "skipLibCheck": true,
-    "module": "ESNext",
-    "moduleResolution": "node",
-    "allowSyntheticDefaultImports": true
-  },
-  "include": ["vite.config.ts"]
-} 
