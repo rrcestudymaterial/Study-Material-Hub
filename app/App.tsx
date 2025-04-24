@@ -102,7 +102,10 @@ const App: React.FC = () => {
         link: savedMaterial.link,
         type: savedMaterial.type,
         subject: savedMaterial.subject,
-        uploadDate: savedMaterial.createdAt.toISOString()
+        uploadDate: savedMaterial.createdAt.toISOString(),
+        semester: savedMaterial.semester,
+        tags: savedMaterial.tags || [],
+        author: savedMaterial.author
       };
       setMaterials(prev => [...prev, mappedMaterial]);
       setOpenAddMaterial(false);
