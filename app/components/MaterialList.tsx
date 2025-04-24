@@ -229,7 +229,7 @@ const MaterialList: React.FC<MaterialListProps> = ({ filters, materials, setMate
   const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this material?')) {
       try {
-        await studyMaterialApi.delete(id);
+        await studyMaterialApi.remove(id);
         setMaterials(prev => prev.filter(material => material.id !== id));
         // Remove from favorites and downloads if present
         setFavorites(prev => prev.filter(fid => fid !== id));
