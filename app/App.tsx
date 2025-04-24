@@ -92,26 +92,23 @@ const App: React.FC = () => {
     localStorage.removeItem('isLoggedIn');
   };
 
-  const handleAddMaterial = async (newMaterial: StudyMaterial) => {
+  const handleAddMaterial = async (newMaterial: Omit<StudyMaterial, 'id' | 'downloads' | 'uploadDate'>): Promise<void> => {
     try {
       const savedMaterial = await studyMaterialApi.create(newMaterial);
       const mappedMaterial: StudyMaterial = {
         id: savedMaterial.id,
         title: savedMaterial.title,
-        description: savedMaterial.description || '',
-        subject: savedMaterial.categoryId,
-        semester: savedMaterial.semester,
-        type: savedMaterial.type as 'PDF' | 'VIDEO',
-        link: savedMaterial.fileUrl,
-        tags: savedMaterial.tags,
-        uploadDate: savedMaterial.createdAt ? savedMaterial.createdAt.toISOString() : new Date().toISOString(),
-        author: savedMaterial.author
+        description: savedMaterial.description,
+        link: savedMaterial.link,
+        type: savedMaterial.type,
+        subject: savedMaterial.subject,
+        uploadDate: savedMaterial.createdAt.toISOString(),
+        downloads: 0
       };
-      const updatedMaterials = [...materials, mappedMaterial];
-      setMaterials(updatedMaterials);
+      setMaterials(prev => [...prev, mappedMaterial]);
+      setOpenAddMaterial(false);
     } catch (error) {
-      console.error('Error saving material to database:', error);
-      // You might want to show an error message to the user here
+      console.error('Error adding material:', error);
     }
   };
 

@@ -252,6 +252,11 @@ const MaterialList: React.FC<MaterialListProps> = ({ filters, materials, setMate
     );
   };
 
+  const handleOpenMaterial = (material: StudyMaterial) => {
+    incrementDownload(material.id);
+    window.open(material.link, '_blank', 'noopener,noreferrer');
+  };
+
   if (filteredMaterials.length === 0) {
     return (
       <Box sx={{ textAlign: 'center', mt: 4 }}>
@@ -382,11 +387,8 @@ const MaterialList: React.FC<MaterialListProps> = ({ filters, materials, setMate
                         size="small"
                         color="primary"
                         variant="contained"
-                        href={material.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        onClick={() => handleOpenMaterial(material)}
                         startIcon={material.type === 'PDF' ? <PictureAsPdf /> : <YouTube />}
-                        onClick={() => incrementDownload(material.id)}
                       >
                         Open
                       </Button>
