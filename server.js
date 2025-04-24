@@ -3,7 +3,11 @@ const { PrismaClient } = require('@prisma/client');
 const cors = require('cors');
 const path = require('path');
 
-const prisma = new PrismaClient();
+// Initialize Prisma with connection management
+const prisma = new PrismaClient({
+  log: ['query', 'info', 'warn', 'error'],
+});
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -70,11 +74,42 @@ app.get('/api/materials', async (req, res) => {
       type && type !== 'ALL' && { type }
     );
 
+    // Test database connection before query
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+    } catch (dbError) {
+      console.error('Database connection test failed:', dbError);
+      return res.status(500).json({
+        error: 'Database connection failed',
+        details: dbError.message
+      });
+    }
+
+    // Use explicit field selection to prevent circular references
     const materials = await prisma.material.findMany({
       where,
-      include: {
-        category: true,
-        user: true,
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        fileUrl: true,
+        type: true,
+        tags: true,
+        author: true,
+        semester: true,
+        createdAt: true,
+        category: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
+        user: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
       },
       orderBy: {
         createdAt: 'desc',
@@ -86,7 +121,7 @@ app.get('/api/materials', async (req, res) => {
       id: material.id,
       title: material.title,
       description: material.description || '',
-      subject: material.categoryId,
+      subject: material.category.id,
       semester: material.semester,
       type: material.type,
       link: material.fileUrl,
@@ -98,10 +133,10 @@ app.get('/api/materials', async (req, res) => {
     res.json(mappedMaterials);
   } catch (error) {
     console.error('Error fetching materials:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to fetch materials',
-      details: error.message,
-      code: error.code
+      message: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });
@@ -175,6 +210,29 @@ app.post('/api/materials', async (req, res) => {
         semester: semester,
         userId: user.id,
         categoryId: category.id
+      },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        fileUrl: true,
+        type: true,
+        tags: true,
+        author: true,
+        semester: true,
+        createdAt: true,
+        category: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
+        user: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
       }
     });
 
@@ -182,7 +240,7 @@ app.post('/api/materials', async (req, res) => {
       id: newMaterial.id,
       title: newMaterial.title,
       description: newMaterial.description || '',
-      subject: newMaterial.categoryId,
+      subject: newMaterial.category.id,
       semester: newMaterial.semester,
       type: newMaterial.type,
       link: newMaterial.fileUrl,
@@ -196,8 +254,8 @@ app.post('/api/materials', async (req, res) => {
     console.error('Error creating material:', error);
     res.status(500).json({ 
       error: 'Failed to create material',
-      details: error.message,
-      code: error.code
+      message: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });
@@ -213,8 +271,8 @@ app.delete('/api/materials/:id', async (req, res) => {
     console.error('Error deleting material:', error);
     res.status(500).json({ 
       error: 'Failed to delete material',
-      details: error.message,
-      code: error.code
+      message: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });
@@ -247,8 +305,24 @@ const startServer = async () => {
     });
   } catch (error) {
     console.error('Failed to start server:', error);
-    process.exit(1);
+    // Don't exit immediately, give time for logs to be written
+    setTimeout(() => {
+      process.exit(1);
+    }, 1000);
   }
 };
+
+// Handle process termination
+process.on('SIGINT', async () => {
+  console.log('Received SIGINT. Closing database connection...');
+  await prisma.$disconnect();
+  process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+  console.log('Received SIGTERM. Closing database connection...');
+  await prisma.$disconnect();
+  process.exit(0);
+});
 
 startServer(); 

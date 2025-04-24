@@ -50,16 +50,21 @@ export const studyMaterialApi = {
       credentials: 'include',
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
-      const data = await response.json();
+      console.error('API Error Response:', data);
       throw new ApiError(
         data.error || 'Failed to fetch materials',
         response.status,
-        data.details
+        {
+          message: data.message,
+          details: data.details
+        }
       );
     }
 
-    return response.json();
+    return data;
   },
 
   // Get study materials by filters
