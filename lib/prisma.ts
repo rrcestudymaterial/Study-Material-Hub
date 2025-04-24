@@ -1,7 +1,12 @@
-const { PrismaClient } = require('@prisma/client');
+import { PrismaClient } from '@prisma/client';
+
+// Declare global prisma type
+declare global {
+  var prisma: PrismaClient | undefined;
+}
 
 // Prevent multiple instances of Prisma Client in development
-let prisma;
+let prisma: PrismaClient;
 
 if (process.env.NODE_ENV === 'production') {
   prisma = new PrismaClient({
@@ -21,4 +26,4 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // Export the singleton instance
-module.exports = prisma; 
+export default prisma; 

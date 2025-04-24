@@ -224,6 +224,9 @@ app.post('/api/materials', async (req, res) => {
         semester: semester,
         userId: user.id,
         categoryId: category.id
+      },
+      include: {
+        category: true
       }
     });
 
@@ -231,7 +234,7 @@ app.post('/api/materials', async (req, res) => {
       id: newMaterial.id,
       title: newMaterial.title,
       description: newMaterial.description || '',
-      subject: newMaterial.categoryId,
+      subject: newMaterial.category.name,
       semester: newMaterial.semester,
       type: newMaterial.type,
       link: newMaterial.fileUrl,

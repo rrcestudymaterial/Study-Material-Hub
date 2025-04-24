@@ -71,21 +71,7 @@ const AddMaterial: React.FC<AddMaterialProps> = ({ onAdd, onClose, open }) => {
         author,
       });
 
-      // Create a new material object with the current date if createdAt is not available
-      const material: StudyMaterial = {
-        id: newMaterial.id,
-        title: newMaterial.title,
-        description: newMaterial.description || '',
-        subject: newMaterial.subject || newMaterial.categoryId,
-        semester: newMaterial.semester,
-        type: newMaterial.type as 'PDF' | 'VIDEO',
-        link: newMaterial.link || newMaterial.fileUrl,
-        tags: newMaterial.tags || [],
-        uploadDate: newMaterial.uploadDate || new Date().toISOString(),
-        author: newMaterial.author
-      };
-
-      onAdd(material);
+      onAdd(newMaterial);
       handleReset();
       onClose();
     } catch (err: any) {
