@@ -30,6 +30,7 @@ import FilterSection from './components/FilterSection';
 import Login from './components/Login';
 import AddMaterial from './components/AddMaterial';
 import Footer from './components/Footer';
+import { studyMaterialApi } from '../lib/api';
 
 // Import the logo
 import logo from '../logo.jpg';
@@ -85,10 +86,27 @@ const App: React.FC = () => {
     localStorage.removeItem('isLoggedIn');
   };
 
-  const handleAddMaterial = (newMaterial: StudyMaterial) => {
-    const updatedMaterials = [...materials, newMaterial];
-    setMaterials(updatedMaterials);
-    localStorage.setItem('materials', JSON.stringify(updatedMaterials));
+  const handleAddMaterial = async (newMaterial: StudyMaterial) => {
+    try {
+      const savedMaterial = await studyMaterialApi.create(newMaterial);
+      const mappedMaterial: StudyMaterial = {
+        id: savedMaterial.id,
+        title: savedMaterial.title,
+        description: savedMaterial.description || '',
+        subject: savedMaterial.categoryId,
+        semester: savedMaterial.semester,
+        type: savedMaterial.type as 'PDF' | 'VIDEO',
+        link: savedMaterial.fileUrl,
+        tags: savedMaterial.tags,
+        uploadDate: savedMaterial.createdAt.toISOString(),
+        author: savedMaterial.author
+      };
+      const updatedMaterials = [...materials, mappedMaterial];
+      setMaterials(updatedMaterials);
+    } catch (error) {
+      console.error('Error saving material to database:', error);
+      // You might want to show an error message to the user here
+    }
   };
 
   const toggleDarkMode = () => {

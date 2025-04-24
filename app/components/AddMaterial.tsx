@@ -62,9 +62,16 @@ const AddMaterial: React.FC<AddMaterialProps> = ({ onAdd, onClose, open }) => {
       });
 
       onAdd({
-        ...newMaterial,
         id: newMaterial.id,
+        title: newMaterial.title,
+        description: newMaterial.description || '',
+        subject: newMaterial.categoryId,
+        semester: newMaterial.semester,
+        type: newMaterial.type as 'PDF' | 'VIDEO',
+        link: newMaterial.fileUrl,
+        tags: newMaterial.tags,
         uploadDate: newMaterial.createdAt.toISOString(),
+        author: newMaterial.author
       });
       
       handleReset();
