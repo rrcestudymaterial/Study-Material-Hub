@@ -6,16 +6,6 @@ const prisma = require('./lib/prisma').default;
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Test database connection
-prisma.$connect()
-  .then(() => {
-    console.log('Successfully connected to the database');
-  })
-  .catch((error) => {
-    console.error('Failed to connect to the database:', error);
-    process.exit(1);
-  });
-
 // Middleware
 app.use(cors({
   origin: '*', // Allow all origins in development
@@ -32,6 +22,18 @@ app.use((err, req, res, next) => {
     stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
   });
 });
+
+// Test database connection with proper error handling
+const testDatabaseConnection = async () => {
+  try {
+    await prisma.$connect();
+    console.log('Successfully connected to the database');
+    return true;
+  } catch (error) {
+    console.error('Failed to connect to the database:', error);
+    return false;
+  }
+};
 
 // Simple health check endpoint
 app.get('/api/health', (req, res) => {
@@ -87,26 +89,28 @@ app.get('/api/materials', async (req, res) => {
       whereClause.type = type;
     }
 
-    // Test database connection before query
-    try {
-      await prisma.$queryRaw`SELECT 1`;
-    } catch (dbError) {
-      console.error('Database connection test failed:', dbError);
-      return res.status(500).json({
-        error: 'Database connection failed',
-        details: dbError.message
-      });
-    }
-
-    // Fetch materials without nested relations
+    // Fetch materials without nested relations to prevent circular references
     const materials = await prisma.material.findMany({
       where: whereClause,
       orderBy: {
         createdAt: 'desc',
       },
+      // Explicitly select only the fields we need
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        fileUrl: true,
+        type: true,
+        tags: true,
+        author: true,
+        semester: true,
+        categoryId: true,
+        createdAt: true
+      }
     });
 
-    // Fetch categories separately
+    // Fetch categories separately to avoid circular references
     const categoryIds = [...new Set(materials.map(m => m.categoryId))];
     const categories = await prisma.category.findMany({
       where: {
@@ -284,8 +288,11 @@ if (process.env.NODE_ENV === 'production') {
 const startServer = async () => {
   try {
     // Test database connection
-    await prisma.$connect();
-    console.log('Database connection successful');
+    const dbConnected = await testDatabaseConnection();
+    if (!dbConnected) {
+      console.error('Cannot start server without database connection');
+      process.exit(1);
+    }
 
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
