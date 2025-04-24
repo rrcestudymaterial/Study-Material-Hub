@@ -35,7 +35,7 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
 } from '@mui/icons-material';
-import { studyMaterialApi } from '../../services/studyMaterialApi';
+import { studyMaterialApi } from '../../lib/api';
 
 // Sample data with enhanced information
 const sampleMaterials: StudyMaterial[] = [
