@@ -92,7 +92,7 @@ const App: React.FC = () => {
     localStorage.removeItem('isLoggedIn');
   };
 
-  const handleAddMaterial = async (newMaterial: Omit<StudyMaterial, 'id' | 'downloads' | 'uploadDate'>): Promise<void> => {
+  const handleAddMaterial = async (newMaterial: Omit<StudyMaterial, 'id' | 'uploadDate'>): Promise<void> => {
     try {
       const savedMaterial = await studyMaterialApi.create(newMaterial);
       const mappedMaterial: StudyMaterial = {
@@ -102,8 +102,7 @@ const App: React.FC = () => {
         link: savedMaterial.link,
         type: savedMaterial.type,
         subject: savedMaterial.subject,
-        uploadDate: savedMaterial.createdAt.toISOString(),
-        downloads: 0
+        uploadDate: savedMaterial.createdAt.toISOString()
       };
       setMaterials(prev => [...prev, mappedMaterial]);
       setOpenAddMaterial(false);
